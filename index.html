@@ -1,1 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Questrade — Custom Indexing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Funnel+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#E1DFDD; --sage:#A7B2A7; --ink:#3D4A41; --ink-deep:#1B201B;
+    --green-bg:#C4FFB1; --near-black:#15191A; --muted:#B6B7B6;
+    --right-bg:#EFF2ED; --hair:#E6E6E4; --hl:#EFF2ED; --micro:#6f756e; --check:#2E3A2E;
+    --ff:"Funnel Sans","Helvetica Neue",Arial,sans-serif;
+    --fs-h1:clamp(40px,6.4vw,72px); --fs-h2:clamp(30px,4.6vw,54px);
+    --fs-h3:clamp(22px,2.5vw,32px); --fs-body:clamp(17px,1.6vw,20px);
+    --fs-eyebrow:clamp(15px,1.4vw,22px); --fs-cta:clamp(16px,1.56vw,20px);
+    --fs-micro:clamp(13px,1vw,14px); --ls:-0.02em; --nav-h:78px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;} html{ scroll-padding-top:var(--nav-h); } section{ scroll-margin-top:var(--nav-h); }
+  html,body{background:var(--bg);font-family:var(--ff);}
 
+  /* ---------- HERO (85vh) ---------- */
+  .hero{ position:relative; width:100%; height:85vh; min-height:520px; background:var(--bg); overflow:hidden; }
+  .hero__bg{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:right bottom; z-index:0; pointer-events:none; user-select:none; }
+  .hero__content{ position:relative; z-index:2; padding:calc(var(--nav-h) + 3vh) 0 0 40px; }
+  .hero__title{ font-weight:500; line-height:0.9; letter-spacing:var(--ls); font-size:var(--fs-h1); color:var(--ink); }
+  .hero__title span{ display:block; white-space:nowrap; }
+  .hero__title .lead{ color:var(--sage); }
+  .hero__body{ margin-top:clamp(18px,2vw,30px); max-width:35vw; font-weight:400; font-size:var(--fs-body); line-height:1.15; letter-spacing:var(--ls); color:var(--ink-deep); }
+  .hero__cta{ margin-top:clamp(20px,2.2vw,34px); display:inline-flex; align-items:center; justify-content:center; background:#A7B2A7; color:#151916; border:1px solid transparent; border-radius:10px; padding:18px 24px; font-family:var(--ff); font-weight:500; font-size:var(--fs-cta); line-height:1; letter-spacing:0; cursor:pointer; transition:background-color .22s ease, color .22s ease; }
+  .hero__cta:hover{ background:transparent; color:#151916; border-color:#151916; } .hero__cta:active{ background:rgba(21,25,22,.06); color:#151916; border-color:#151916; }
+  .placeholder-tag{ position:absolute; right:12px; top:12px; z-index:3; font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:#6c726c; background:rgba(255,255,255,.55); padding:4px 8px; border-radius:6px; }
+
+  /* ---------- FEATURE BAR (15vh) ---------- */
+  .features{ background:var(--green-bg); color:var(--ink-deep); min-height:15vh; display:flex; align-items:center; padding:clamp(20px,2vw,30px) 40px; }
+  .features__grid{ width:100%; display:grid; grid-template-columns:repeat(4,1fr); column-gap:clamp(28px,3vw,52px); row-gap:28px; align-items:start; }
+  .feature__head{ font-weight:700; text-transform:uppercase; font-size:var(--fs-eyebrow); letter-spacing:0; line-height:1; margin-bottom:8px; }
+  .feature__head sup{ font-size:0.55em; font-weight:700; top:-0.7em; }
+  .feature__body{ font-weight:400; font-size:var(--fs-body); line-height:1.15; letter-spacing:var(--ls); max-width:24ch; }
+  @media (max-width:720px){ .features{ min-height:0; } .features__grid{ grid-template-columns:repeat(2,1fr); row-gap:26px; } }
+  @media (max-width:460px){ .features__grid{ grid-template-columns:1fr; } }
+
+  /* ---------- HOW-TO ---------- */
+  .howto{ position:relative; height:400vh; background:#fff; }
+  .howto__pin{ position:sticky; top:var(--nav-h); height:calc(100vh - var(--nav-h)); overflow:hidden; }
+  .howto__stage{ position:absolute; top:0; right:0; width:50%; height:100%; background:var(--right-bg); z-index:0; }
+  .howto__inner{ position:relative; z-index:1; height:100%; }
+  .howto__left{ width:50%; height:100%; display:flex; flex-direction:column; justify-content:center; padding:0 40px; }
+  .howto__eyebrow{ text-transform:uppercase; font-weight:700; font-size:var(--fs-eyebrow); letter-spacing:0; line-height:1; color:var(--near-black); }
+  .howto__title{ margin:18px 0 6px; font-weight:500; line-height:1.0; letter-spacing:var(--ls); font-size:var(--fs-h2); color:var(--near-black); white-space:normal; }
+  .steps{ list-style:none; margin:18px 0 26px; }
+  .step{ position:static; padding:0; cursor:pointer; }
+  .step__head{ position:relative; padding:18px 0; }
+  .step__head::before{ content:''; position:absolute; top:0; left:0; right:0; height:1px; background:rgba(21,25,22,.2); }
+  .step__head::after{ content:''; position:absolute; top:0; left:0; right:0; height:1px; background:#151916; transform:scaleX(0); transform-origin:left; will-change:transform; }
+  @keyframes howtofill{ from{ transform:scaleX(0); } to{ transform:scaleX(1); } }
+  @media (min-width:861px){
+    .step.is-active .step__head::after{ animation:howtofill 10s linear forwards; }
+    .howto.is-paused .step.is-active .step__head::after{ animation-play-state:paused; }
+  }
+  .step:last-of-type{ border-bottom:none; }
+  .step__row{ display:grid; grid-template-columns:auto 1fr; gap:16px; }
+  .step__badge{ width:30px; height:30px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px; background:#fff; border:1px solid #DDD; color:var(--muted); transition:all .35s ease; }
+  .step__title{ font-weight:400; font-size:28px; letter-spacing:var(--ls); color:var(--muted); line-height:1.05; transition:color .35s ease; }
+  .step__body{ margin-top:8px; font-weight:400; font-size:var(--fs-body); line-height:1.15; letter-spacing:var(--ls); color:var(--muted); transition:color .35s ease; }
+  .step.is-active .step__badge{ background:var(--green-bg); border-color:var(--green-bg); color:var(--near-black); }
+  .step.is-active .step__title{ color:var(--near-black); }
+  .step.is-active .step__body{ color:#3a3f3a; }
+  .step__visual{ position:absolute; top:0; right:0; width:50%; height:100%; display:flex; align-items:center; justify-content:center; padding:clamp(14px,2vw,30px); opacity:0; transform:scale(.985); transition:opacity .5s ease, transform .5s ease; z-index:1; }
+  .step__visual img,.step__visual video{ width:100%; max-width:100%; max-height:90%; object-fit:contain; border-radius:18px; display:block; }
+  .step.is-active .step__visual{ opacity:1; transform:scale(1); }
+  .howto__cta{ align-self:flex-start; background:var(--near-black); color:#fff; border:1px solid transparent; transition:background-color .2s ease,color .2s ease,border-color .2s ease; border-radius:8px; padding:15px 22px; font-family:var(--ff); font-weight:500; font-size:var(--fs-cta); line-height:1; letter-spacing:0; cursor:pointer; transition:transform .18s ease, filter .18s ease; }
+  .howto__cta:hover{ background:transparent; color:#151916; border-color:#151916; }
+  @media (max-width:860px){
+    .howto{ height:auto; background:#fff; }
+    .howto__pin{ position:static; height:auto; overflow:visible; }
+    .howto__stage{ display:none; }
+    .howto__inner{ height:auto; }
+    .howto__left{ width:100%; height:auto; padding:48px 20px; } .step{ margin:0; padding:0; } .step__head{ margin:0 -20px; padding:20px 20px; }
+    .howto__title{ white-space:normal; }
+    .hero__title span{ white-space:normal; }
+    .howto__title .brk{ display:none; }
+    .step__badge{ background:var(--green-bg); border-color:var(--green-bg); color:var(--near-black); }
+    .step__title{ color:var(--near-black); }
+    .step__body{ max-height:none; opacity:1; color:#3a3f3a; max-width:none; }
+    .step__visual{ position:static; width:100%; height:auto; opacity:1; transform:none; padding:18px 0 20px; justify-content:flex-start; }
+    .step__visual img,.step__visual video{ max-width:100%; max-height:none; width:100%; border-radius:14px; display:block; }
+    .howto__cta{ width:100%; justify-content:center; display:flex; padding:18px; }
+  }
+
+  /* ---------- COMPARISON ---------- */
+  .cmp{ background:var(--sage); padding:clamp(48px,6vw,90px) 40px clamp(60px,7vw,110px); }
+  .cmp__eyebrow{ text-align:center; text-transform:uppercase; font-weight:700; font-size:var(--fs-eyebrow); letter-spacing:0; line-height:1; color:var(--near-black); }
+  .cmp__title{ text-align:center; margin:18px auto 0; font-weight:500; font-size:var(--fs-h2); line-height:1.0; letter-spacing:var(--ls); color:var(--near-black); max-width:none; line-height:1.05; }
+  .ic{ width:26px; height:26px; flex:none; }
+  .cval{ font-weight:400; font-size:var(--fs-body); letter-spacing:var(--ls); color:var(--near-black); }
+
+  /* desktop table */
+  .ct-wrap{ max-width:1240px; margin:clamp(34px,3.5vw,60px) auto 0; background:#fff; border-radius:20px; overflow:hidden; padding:0; }
+  .ct{ display:grid; grid-template-columns:1.7fr 1fr 1fr 1fr; align-items:stretch; }
+  .ct-cell{ padding:20px clamp(14px,1.6vw,24px); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+  .ct-feat{ align-items:flex-start; text-align:left; }
+  .ct-head .ct-cell{ font-weight:700; text-transform:uppercase; font-size:var(--fs-eyebrow); letter-spacing:0; color:var(--near-black); padding-top:20px; padding-bottom:20px; white-space:nowrap; }
+  .ct-head .ct-feat{ align-items:flex-start; }
+  .ct-name{ font-weight:400; font-size:var(--fs-body); letter-spacing:var(--ls); color:var(--near-black); line-height:1.15; }
+  .ct-sub{ margin-top:4px; font-size:var(--fs-micro); letter-spacing:var(--ls); color:var(--micro); line-height:1.2; }
+  .ct .col-ci{ background:var(--hl); }
+  .ct > .ct-cell{ border-top:1px solid var(--hair); } .ct-head .ct-cell{ border-top:none; }
+  .ct-head .col-ci{ border-radius:0; }
+  .ct-row{ display:contents; }
+  .ct-rowline{ grid-column:1 / -1; height:1px; background:var(--hair); }
+  .ct-rowline.col-ci-line{ }
+  .cc-wrap{ display:none; }
+
+  @media (max-width:860px){
+    .ct-wrap{ display:none; }
+    .cc-wrap{ display:block; max-width:520px; margin:clamp(26px,5vw,40px) auto 0; }
+    .cc{ background:#fff; border-radius:16px; padding:6px 18px 8px; margin-bottom:20px; }
+    .cc-head{ padding:18px 2px 12px; }
+    .cc-row{ display:flex; align-items:center; justify-content:space-between; padding:16px 8px; border-top:1px solid var(--hair); margin:0 -8px; }
+    .cc-row.col-ci{ background:var(--hl); border-radius:10px; border-top:none; }
+    .cc-label{ font-weight:400; font-size:var(--fs-body); letter-spacing:var(--ls); color:var(--near-black); }
+    .cmp__title{ text-align:left; margin-left:0; }
+    .cmp__eyebrow{ text-align:left; }
+  }
+
+  /* global mobile padding = 40px */
+  @media (max-width:860px){
+    .features{ padding:20px; }
+    .feature__body{ max-width:none; }
+    .contest{ padding:clamp(48px,9vw,72px) 20px; }
+    .cmp{ padding-left:20px; padding-right:20px; }
+    .sp{ --pad:20px; }
+    .hero__content{ padding-left:20px; padding-right:20px; }
+    .hero__body{ max-width:none; }
+    .endcard__content{ padding:40px 20px; }
+  }
+
+  /* white button variant */
+  .qbtn--white{ background:#fff; color:#151916; }
+  .qbtn--white:hover{ background:transparent; color:#fff; border-color:#fff; }
+  .qbtn--white:active{ background:rgba(255,255,255,.12); color:#fff; border-color:#fff; }
+
+  /* SUMMARY */
+  .summary{ display:flex; background:var(--ink); color:#fff; min-height:100vh; }
+  .summary__left{ flex:1 1 50%; min-width:0; display:flex; flex-direction:column; gap:clamp(26px,3vw,40px); justify-content:center; padding:40px; }
+  .summary__title{ font-weight:500; font-size:var(--fs-h2); line-height:1; letter-spacing:var(--ls); color:#fff; }
+  .summary__cta{ align-self:flex-start; }
+  .summary__cards{ display:grid; grid-template-columns:repeat(3,1fr); grid-auto-rows:1fr; gap:20px; width:100%; }
+  .summary__row{ display:contents; }
+  .sumcard{ border:1px solid var(--sage); border-radius:10px; padding:20px; min-height:200px; display:flex; flex-direction:column; justify-content:space-between; gap:36px; }
+  .sumcard__icon{ width:40px; height:40px; border-radius:8px; background:var(--green-bg); color:#151916; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace; font-weight:700; font-size:14px; letter-spacing:-0.5px; }
+  .sumcard__txt{ font-weight:400; font-size:var(--fs-body); line-height:1.15; letter-spacing:var(--ls); color:#fff; }
+  .summary__media{ flex:1 1 50%; min-width:0; background:var(--sage); position:relative; overflow:hidden; }
+  .summary__media img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+  @media (max-width:860px){
+    .summary{ flex-direction:column; min-height:0; }
+    .summary__media{ order:-1; flex:none; width:auto; margin:20px 20px 0; border-radius:16px; aspect-ratio:5/6; }
+    .sumcard__txt{ font-size:24px; }
+    .sumcard{ min-height:170px; gap:28px; }
+    .summary__left{ padding:20px; gap:28px; }
+    .summary__cards{ grid-template-columns:1fr; }
+    .summary__cta{ align-self:stretch; width:100%; justify-content:center; }
+  }
+
+  /* END CARD */
+  .endcard{ position:relative; min-height:100vh; overflow:hidden; display:flex; }
+  .endcard__bg{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; background:radial-gradient(circle at 62% 42%, #2a3630, #15191A 70%); opacity:0; transition:opacity .5s ease; }
+    .endcard__bg.is-active{ opacity:1; }
+  .endcard__content{ position:relative; z-index:2; flex:1; display:flex; flex-direction:column; align-items:flex-start; justify-content:space-between; gap:24px; width:100%; padding:clamp(40px,6vw,80px) 40px; }
+  .endcard__card{ width:min(400px,40vw); flex-shrink:0; backdrop-filter:blur(50px); -webkit-backdrop-filter:blur(50px); background:rgba(255,255,255,.30); border:1px solid rgba(0,0,0,.1); border-radius:20px; padding:20px; display:flex; flex-direction:column; gap:18px; }
+  .endcard__arrows{ display:flex; gap:14px; }
+  .endcard__arrow{ width:40px; height:40px; border-radius:50%; background:#151916; color:#fff; display:flex; align-items:center; justify-content:center; border:1px solid transparent; transition:background-color .2s ease,color .2s ease,border-color .2s ease; cursor:pointer; padding:0; }
+    .endcard__arrow:hover{ background:transparent; color:#151916; border-color:#151916; }
+  .endcard__arrow svg{ width:22px; height:22px; }
+  .endcard__arrow.is-disabled{ opacity:.35; pointer-events:none; cursor:default; }
+  .endcard__title{ font-weight:400; font-size:clamp(26px,3vw,32px); line-height:1.05; letter-spacing:var(--ls); color:#151916; }
+  .endcard__sub{ font-weight:400; font-size:var(--fs-body); line-height:1.15; letter-spacing:var(--ls); color:#151916; }
+  .endcard__cta{ width:100%; }
+  .endcard__pills{ display:flex; flex-direction:column; gap:10px; align-items:flex-start; max-width:none; }
+  .endcard__pillrow{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-start; }
+  .endcard__pill{ backdrop-filter:blur(50px); -webkit-backdrop-filter:blur(50px); background:rgba(0,0,0,.30); color:#fff; border-radius:100px; padding:18px 24px; font-family:var(--ff); font-weight:500; font-size:var(--fs-cta); line-height:1; letter-spacing:0; white-space:nowrap; }
+  @media (max-width:860px){
+    .endcard__content{ flex-direction:column; align-items:stretch; justify-content:flex-start; gap:0; }
+    .endcard__card{ width:100%; }
+    .endcard__pills{ display:none; }
+  }
+
+  /* uniform 40px vertical padding per section */
+  .features{ padding-top:40px; padding-bottom:40px; }
+  .cmp{ padding-top:40px; padding-bottom:40px; }
+  .contest{ padding-top:40px; padding-bottom:40px; }
+  .howto__left{ padding-top:40px; padding-bottom:40px; }
+  .summary__left{ padding-top:40px; padding-bottom:40px; }
+  .endcard__content{ padding-top:40px; padding-bottom:40px; }
+
+  /* unify all section H2s */
+  .howto__title,.cmp__title,.contest__title,.summary__title,.sp .sp__title{ line-height:1.05; }
+
+  /* sticky nav */
+  .nav{ position:fixed; top:0; left:0; right:0; z-index:200; display:flex; align-items:center; justify-content:space-between; padding:16px 40px; background:rgba(255,255,255,.5); -webkit-backdrop-filter:blur(28px); backdrop-filter:blur(28px); border-bottom:1px solid rgba(21,25,22,.1); }
+  .nav__logo{ display:flex; align-items:center; }
+  .nav__logo svg{ height:34px; width:auto; display:block; }
+  .nav__cta{ background:#151916; color:#fff; border:1px solid transparent; border-radius:10px; padding:14px 20px; font-family:var(--ff); font-weight:500; font-size:clamp(15px,1.4vw,18px); line-height:1; letter-spacing:-0.02em; text-decoration:none; white-space:nowrap; transition:background-color .22s ease, color .22s ease; }
+  .nav__cta:hover{ background:transparent; color:#151916; border-color:#151916; }
+  .nav__cta:active{ background:rgba(21,25,22,.06); color:#151916; border-color:#151916; }
+  .summary__left{ padding-top:calc(var(--nav-h) + 32px); }
+    @media (max-width:860px){ .summary__left{ padding-top:40px; } }
+  .endcard__content{ padding-top:calc(var(--nav-h) + 24px); }
+  @media (max-width:860px){
+    :root{ --nav-h:64px; }
+    .nav{ padding:12px 20px; }
+    .nav__cta{ padding:12px 16px; }
+    .nav__logo svg{ height:30px; }
+  }
+
+  /* scroll-in animations */
+  /* HERO builds in at ALL widths */
+  .anim-ready .hero .rv, .anim-ready .hero .rv-line{ opacity:0; transform:translateY(20px); transition:opacity .6s cubic-bezier(.22,.65,.2,1), transform .6s cubic-bezier(.22,.65,.2,1); }
+  /* other sections animate on DESKTOP only */
+  @media (min-width:861px){
+    .anim-ready .rv, .anim-ready .rv-line{ opacity:0; transform:translateY(20px); transition:opacity .6s cubic-bezier(.22,.65,.2,1), transform .6s cubic-bezier(.22,.65,.2,1); }
+    .anim-ready .rv-h{ opacity:0; }
+    .anim-ready .rv-h.rv-split{ opacity:1; }
+    .anim-ready .sp .card{ opacity:0; transition:transform .18s ease, opacity .55s cubic-bezier(.2,.7,.2,1); }
+  }
+  .anim-ready .rv-line{ display:block; }
+  .anim-ready .rv.rv-show, .anim-ready .rv-line.rv-show{ opacity:1; transform:none; }
+  .anim-ready .sp .card.rv-show{ opacity:1; }
+  @media (prefers-reduced-motion: reduce){ .anim-ready .rv,.anim-ready .rv-line,.anim-ready .rv-h,.anim-ready .hero .rv,.anim-ready .hero .rv-line,.anim-ready .sp .card{ opacity:1 !important; transform:none !important; transition:none !important; } }
+</style>
+<style>
+
+  .sp{ --ff:"Funnel Sans","Helvetica Neue",Arial,sans-serif; --nb:#15191A; --ink-deep:#1B201B; --sp-bg:#F0F2EC;
+       --fs-h2:clamp(30px,4.6vw,54px); --fs-eyebrow:clamp(15px,1.4vw,22px); --fs-body:clamp(17px,1.4vw,20px); --ls:-0.02em; --pad:40px;
+       --t:clamp(28px,2.5vw,36px); --au:clamp(17px,1.4vw,20px); --bd:clamp(14px,1.12vw,16px);
+       font-family:var(--ff); background:var(--sp-bg); padding:clamp(46px,6vw,96px) 0 clamp(40px,5vw,72px); overflow:hidden; }
+  .sp *{ box-sizing:border-box; }
+  .sp .sp__head{ padding:0 var(--pad); }
+  .sp .sp__eyebrow{ text-transform:uppercase; font-weight:700; font-size:var(--fs-eyebrow); color:var(--nb); margin:0; }
+  .sp .sp__title{ margin:16px 0 8px; font-weight:500; font-size:var(--fs-h2); line-height:1; letter-spacing:var(--ls); color:var(--nb); }
+  .sp .sp__sub{ font-weight:400; font-size:var(--fs-body); line-height:1.15; letter-spacing:var(--ls); color:var(--ink-deep); max-width:none; margin:0; }
+  .sp .sp__viewport{ margin-top:clamp(14px,2vw,28px); padding:38px 0; overflow:hidden; perspective:1700px; }
+  .sp .lf{ display:none; } .sp .ls{ display:inline; } .sp .sp__track{ display:flex; gap:20px; padding:0 0 0 var(--pad); transition:transform .5s cubic-bezier(.22,.65,.2,1); will-change:transform; }
+  .sp .card{ flex:0 0 auto; width:clamp(320px,86vw,440px); height:648px; position:relative; perspective:1300px;
+         transform:perspective(820px) rotateX(var(--tx,0deg)) rotateY(var(--ty,0deg)) scale(var(--s,1)); transition:transform .18s ease; transform-origin:center; will-change:transform; }
+  .sp .card__inner{ position:absolute; inset:0; transform-style:preserve-3d; transition:transform .42s cubic-bezier(.3,.7,.25,1); }
+  .sp .card.is-flipped .card__inner{ transform:rotateY(180deg); }
+  .sp .face{ position:absolute; inset:0; border-radius:18px; overflow:hidden; backface-visibility:hidden; -webkit-backface-visibility:hidden; }
+  .sp .face.front{ background:#15191A; }
+  .sp .face.back{ background:#fff; transform:rotateY(180deg); }
+  .sp .cf{ height:100%; display:flex; flex-direction:column; padding:20px; color:#E6E8E4; }
+  .sp .cf__title{ font-weight:500; font-size:var(--t); line-height:1.0; letter-spacing:var(--ls); }
+  .sp .cf__author{ display:flex; align-items:center; gap:10px; margin-top:14px; }
+  .sp .cf__name{ font-size:var(--au); font-weight:400; line-height:1.05; letter-spacing:var(--ls); }
+  .sp .ava{ width:32px; height:32px; border-radius:50%; border:1.5px solid #555; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#E6E8E4; background:#23271f; flex:none; }
+  .sp .ava.dark{ color:#15191A; background:#E6E8E4; border-color:#d3d6cf; }
+  .sp .cf__desc{ margin:14px 0; font-size:var(--bd); font-weight:400; line-height:1.12; letter-spacing:var(--ls); color:#A7B2A7; }
+  .sp .cf__stats{ display:flex; justify-content:space-between; gap:8px; padding:12px 0 14px; border-top:1px solid #2a2f2a; }
+  .sp .cf__stats .lab{ display:block; font-size:12px; color:#7d847d; text-transform:uppercase; letter-spacing:.01em; }
+  .sp .cf__stats .val{ display:block; font-size:17px; color:#EDEFEA; margin-top:3px; letter-spacing:var(--ls); }
+  .sp .chart{ display:flex; flex-direction:column; flex:1; min-height:0; }
+  .sp .chart-big{ display:flex; flex-direction:column; flex:1; min-height:0; }
+  .sp .alloc{ border:1px solid; border-radius:7px; padding:7px 11px; display:flex; align-items:flex-start; justify-content:space-between; gap:8px; min-height:30px; overflow:hidden; position:relative; }
+  .sp .chart-big .alloc + .alloc{ margin-top:-1px; }
+  .sp .chart-small{ display:flex; flex-direction:column; margin-top:-1px; }
+  .sp .chart-small .srow + .srow{ margin-top:-1px; }
+  .sp .srow{ display:flex; }
+  .sp .srow .alloc + .alloc{ margin-left:-1px; }
+  .sp .alloc .ap{ font-size:15px; color:#EDEFEA; font-weight:500; white-space:nowrap; letter-spacing:var(--ls); }
+  .sp .alloc .al{ font-size:10.5px; color:#9aa39a; text-align:right; line-height:1.2; }
+  .sp .alloc.sm{ flex:1; min-height:24px; padding:6px 9px; }
+  .sp .alloc.sm .ap{ font-size:12px; } .sp .alloc.sm .al{ font-size:9px; }
+  .sp .cf__btns{ display:flex; gap:8px; margin-top:16px; }
+  .sp .btn{ flex:1; min-width:0; display:flex; align-items:center; justify-content:center; text-align:center; border:1px solid transparent; border-radius:10px; padding:11px 17px; font-family:var(--ff); font-weight:500; font-size:16px; line-height:1.4; letter-spacing:var(--ls); cursor:pointer; white-space:normal; transition:background-color .2s ease, color .2s ease, border-color .2s ease; }
+  /* front (dark card) */
+  .sp .cf__btns .flip-back{ background:#3D4A41; color:#fff; }
+  .sp .cf__btns .flip-back:hover{ background:transparent; border-color:#3D4A41; color:#A7B2A7; }
+  .sp .cf__btns .flip-back:active{ background:rgba(61,74,65,.7); color:#fff; border-color:transparent; }
+  .sp .cf__btns .light{ background:#F0F2EC; color:#151916; }
+  .sp .cf__btns .light:hover{ background:transparent; border-color:#fff; color:#fff; }
+  .sp .cf__btns .light:active{ background:rgba(240,242,236,.7); color:#151916; border-color:transparent; }
+  .sp .cb{ height:100%; display:flex; flex-direction:column; padding:20px; color:#15191A; }
+  .sp .cb__title{ font-weight:500; font-size:var(--t); line-height:1.0; letter-spacing:var(--ls); }
+  .sp .cb__q{ display:flex; gap:12px; margin:14px 0 16px; }
+  .sp .cb__qt .q{ font-size:var(--bd); font-weight:400; line-height:1.05; letter-spacing:var(--ls); color:#3D4A41; margin:0; }
+  .sp .cb__qt .qa{ font-size:var(--bd); font-weight:400; margin:8px 0 0; color:#3D4A41; letter-spacing:var(--ls); }
+  .sp .cb__div{ height:1px; background:rgba(21,25,22,.14); margin:0 0 16px; }
+  .sp .cb__hl{ text-transform:uppercase; font-weight:500; font-size:var(--bd); letter-spacing:var(--ls); margin-bottom:10px; }
+  .sp .tblbox{ flex:1; min-height:0; background:#F0F2EC; border-radius:12px; overflow:hidden; }
+  .sp .tbl{ width:100%; border-collapse:collapse; table-layout:fixed; }
+  .sp .tbl col.c-tk{ width:22%; } .sp .tbl col.c-nm{ width:33%; } .sp .tbl col.c-sec{ width:25%; } .sp .tbl col.c-wt{ width:20%; }
+  .sp .tbl th{ text-align:left; font-size:12px; text-transform:uppercase; color:#15191A; font-weight:600; padding:11px 4px 9px 13px; letter-spacing:var(--ls); position:sticky; top:0; background:#F0F2EC; }
+  .sp .tbl th.wt, .sp .tbl td.wt{ text-align:right; padding-right:13px; padding-left:2px; }
+  .sp .tbl td{ font-size:12px; padding:6.5px 4px 6.5px 13px; border-top:1px solid rgba(21,25,22,.14); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#15191A; }
+  .sp .tbl td.tk{ font-weight:600; }
+  .sp .tbl td.sec{ color:#3D4A41; }
+  .sp .cb__btns{ display:flex; gap:8px; margin-top:16px; }
+  /* back (white card) */
+  .sp .cb__btns .flip-front{ background:#F0F2EC; color:#151916; }
+  .sp .cb__btns .flip-front:hover{ background:transparent; border-color:#151916; color:#151916; }
+  .sp .cb__btns .flip-front:active{ background:rgba(240,242,236,.7); color:#151916; border-color:transparent; }
+  .sp .cb__btns .dark{ background:#3D4A41; color:#fff; }
+  .sp .cb__btns .dark:hover{ background:transparent; border-color:#3D4A41; color:#3D4A41; }
+  .sp .cb__btns .dark:active{ background:rgba(61,74,65,.7); color:#fff; border-color:transparent; }
+  .sp .sp__nav{ display:flex; gap:12px; padding:clamp(20px,2.4vw,32px) var(--pad) 0; }
+  .sp .sp__arrow{ width:48px; height:48px; border-radius:50%; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; background:#15191A; color:#fff; transition:background-color .2s,color .2s,transform .15s; }
+  .sp .sp__arrow svg{ width:18px; height:18px; }
+  .sp .sp__arrow.prev{ background:#15191A; color:#fff; }
+  .sp .sp__arrow.next{ background:#15191A; color:#fff; }
+  .sp .sp__arrow:disabled{ background:#DCE0D8; color:#A7AEA6; cursor:default; }
+  .sp .sp__arrow:not(:disabled):active{ transform:scale(.94); }
+
+
+
+  .sp .sp__pin{ }
+  .sp .tblbox{ overflow:hidden auto; }
+  @media (min-width:861px){ .sp .lf{ display:inline; } .sp .ls{ display:none; }
+    .sp{ overflow:visible; }
+    .sp .sp__pin{ position:sticky; top:var(--nav-h); height:calc(100vh - var(--nav-h)); overflow:hidden; display:flex; flex-direction:column; justify-content:center; }
+    .sp .sp__head{ padding-top:0; }
+    .sp .sp__viewport{ margin-top:clamp(12px,1.6vw,22px); padding:20px 0; }
+    .sp .sp__nav{ padding-top:clamp(14px,1.6vw,22px); }
+    .sp .card{ height:clamp(480px, calc(100vh - var(--nav-h) - 210px), 648px); }
+    .sp .sp__nav{ display:none; }
+    .sp .btn{ white-space:nowrap; }
+  }
+  .sp .sp__end{ flex:0 0 auto; width:calc(var(--pad) - 20px); align-self:stretch; }
+
+</style>
+<style>
+
+  /* shared button system (Figma node 19:3244) */
+  .qbtn{ display:inline-flex; align-items:center; justify-content:center; border:1px solid transparent; border-radius:10px; padding:18px 24px; font-family:var(--ff); font-weight:500; font-size:var(--fs-cta); line-height:1; letter-spacing:0; cursor:pointer; white-space:nowrap; text-decoration:none; transition:background-color .22s ease,color .22s ease,border-color .22s ease; }
+  .qbtn--green{ background:#C4FFB1; color:#151916; }
+  .qbtn--green:hover{ background:transparent; color:#151916; border-color:#151916; }
+  .qbtn--green:active{ background:rgba(21,25,22,.06); color:#151916; border-color:#151916; }
+  .qbtn--dark{ background:#151916; color:#fff; }
+  .qbtn--dark:hover{ background:transparent; color:#151916; border-color:#151916; }
+  .qbtn--dark:active{ background:rgba(21,25,22,.06); color:#151916; border-color:#151916; }
+  .qbtn--sage{ background:#A7B2A7; color:#151916; }
+  .qbtn--sage:hover{ background:transparent; color:#151916; border-color:#151916; }
+  .qbtn--sage:active{ background:rgba(21,25,22,.06); color:#151916; border-color:#151916; }
+
+  /* CONTEST */
+  .contest{ background:#fff; padding:clamp(56px,7vw,96px) 40px; display:flex; flex-direction:column; align-items:center; gap:clamp(48px,5.5vw,80px); }
+  .contest__text{ max-width:1180px; width:100%; display:flex; flex-direction:column; align-items:center; gap:clamp(20px,2.2vw,36px); text-align:center; }
+  .contest__eyebrow{ text-transform:uppercase; font-weight:700; font-size:var(--fs-eyebrow); color:#3D4A41; letter-spacing:0; }
+  .contest__title{ font-weight:500; font-size:var(--fs-h2); line-height:1; letter-spacing:var(--ls); color:#151916; }
+  .contest__body{ font-weight:400; font-size:var(--fs-body); line-height:1.15; letter-spacing:var(--ls); color:#3D4A41; max-width:62ch; }
+  .contest__cta{ display:flex; gap:16px; flex-wrap:wrap; justify-content:center; margin-top:6px; }
+  .contest__images{ display:grid; grid-template-columns:repeat(4,1fr); gap:20px; width:100%; max-width:1800px; }
+  .contest__img{ position:relative; aspect-ratio:430/373; border-radius:12px; overflow:hidden; }
+  .contest__img img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .contest__shade{ position:absolute; inset:0; background:rgba(4,6,7,.30); pointer-events:none; }
+  @media (max-width:980px){ .contest__images{ grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:620px){ .contest__images{ display:flex; grid-template-columns:none; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; gap:14px; scrollbar-width:none; align-self:stretch; margin-left:-20px; margin-right:-20px; padding-left:20px; } .contest__images::-webkit-scrollbar{ display:none; } .contest__img{ flex:0 0 84%; scroll-snap-align:center; } }
+
+</style>
+<script>document.documentElement.classList.add('anim-ready');</script>
+</head>
+<body>
+  <nav class="nav">
+    <a class="nav__logo" href="#" aria-label="Questrade home"><svg viewBox="0 0 50.8888 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.3979 22.0636C21.1463 15.1612 26.0834 9.93649 30.5699 7.51109L26.0641 0.417016C25.7095 -0.139005 25.1439 -0.139005 24.8083 0.417016L0.151639 39.281C-0.203099 39.8371 0.0940481 40 0.736408 40H12.4991C12.317 34.9766 13.8221 28.6112 17.3979 22.0636Z" fill="#15191A"/><path d="M32.1033 11.9298C29.6875 10.6069 24.4724 15.5057 20.4557 22.8777C16.4484 30.2403 15.1543 37.2864 17.57 38.6189C19.3244 39.568 22.2771 37.0659 25.4311 32.9533V23.5393C25.4311 22.5614 26.0446 22.0245 26.5048 22.8777L29.1315 27.8436C29.1698 27.786 29.189 27.7382 29.2274 27.6806C33.2442 20.3085 34.5288 13.2624 32.1033 11.9298Z" fill="#15191A"/><path d="M50.7371 39.2805L40.7861 23.5872C39.9234 26.5399 38.6483 29.6651 36.9611 32.7616C36.0791 34.3722 35.1397 35.8868 34.1522 37.3152L36.0312 39.9995H50.1522C50.7946 39.9995 51.0917 39.8364 50.7371 39.2805Z" fill="#15191A"/></svg></a>
+    <a class="nav__cta" href="#">Customize an index</a>
+  </nav>
+
+
+  <!-- icons -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="ic-check" viewBox="0 0 28 28"><circle cx="14" cy="14" r="14" fill="#2E3A2E"/><path d="M8 14.5l3.8 3.8L20 9.2" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="ic-x" viewBox="0 0 28 28"><circle cx="14" cy="14" r="13" fill="none" stroke="#C2C7C0" stroke-width="1.5"/><path d="M9.6 9.6l8.8 8.8M18.4 9.6l-8.8 8.8" stroke="#9aa09a" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  </svg>
+
+  <!-- ===== HERO ===== -->
+  <section data-ag class="hero">
+    <video class="hero__bg" autoplay muted loop playsinline preload="auto"><source src="media/hero.mp4" type="video/mp4"></video>
+    <div class="hero__content">
+      <h1 class="hero__title">
+        <span class="lead rv-line">Custom Indexing.</span>
+        <span class="l2 rv-line">Remix the markets.</span>
+        <span class="l3 rv-line">Only at Questrade.</span>
+      </h1>
+      <p class="hero__body rv">Turn a basic index into one that fully matches any theme or investing strategy. Keep its growth on track with built-in automation and rebalancing tools.</p>
+      <button class="hero__cta rv" type="button">Get started</button>
+    </div>
+  </section>
+
+  <!-- ===== FEATURE BAR ===== -->
+  <section data-ag class="features">
+    <div class="features__grid">
+      <div class="feature rv"><h3 class="feature__head">No fees<sup>1</sup></h3><p class="feature__body">No account fees, management fees, or trading commissions.</p></div>
+      <div class="feature rv"><h3 class="feature__head">Start fast</h3><p class="feature__body">Turn a starting template into an index that fits your specific strategy in 5 minutes.</p></div>
+      <div class="feature rv"><h3 class="feature__head">Fully customizable</h3><p class="feature__body">Fine tune every holding. Think tech is a bubble? Trim it. Believe in metals? Boost it.</p></div>
+      <div class="feature rv"><h3 class="feature__head">Easy maintenance</h3><p class="feature__body">Built-in portfolio drift alerts and one-click portfolio rebalancing.</p></div>
+    </div>
+  </section>
+
+  <!-- ===== HOW-TO ===== -->
+  <section data-ag class="howto" id="howto">
+    <div class="howto__pin">
+      <div class="howto__stage"></div>
+      <div class="howto__inner">
+        <div class="howto__left">
+          <p class="howto__eyebrow rv">How to make a custom index</p>
+          <h2 class="howto__title rv-h">From idea to index‑sized <br class="brk">portfolio in minutes</h2>
+          <ol class="steps">
+            <li class="step is-active" data-step="0"><div class="step__head"><div class="step__row rv"><span class="step__badge">1</span><div><div class="step__title">Open a new Custom Indexing account</div><div class="step__body">Your index will need its own specific account. This can be a TFSA, RRSP, FHSA, or Cash account.</div></div></div></div><div class="step__visual"><video class="step__media" autoplay muted loop playsinline preload="auto" aria-label="Open an account"><source src="media/step-1.mp4" type="video/mp4"></video></div></li>
+            <li class="step" data-step="1"><div class="step__head"><div class="step__row rv"><span class="step__badge">2</span><div><div class="step__title">Start from a template</div><div class="step__body">Choose from either a broad market index, a thematic one, or one created by investors in the Canadian finance community.</div></div></div></div><div class="step__visual"><video class="step__media" autoplay muted loop playsinline preload="auto" aria-label="Start from a template"><source src="media/step-2.mp4" type="video/mp4"></video></div></li>
+            <li class="step" data-step="2"><div class="step__head"><div class="step__row rv"><span class="step__badge">3</span><div><div class="step__title">Remix what&rsquo;s inside</div><div class="step__body">Make adjustments at the stock and sector level so that it suits your strategy. Or keep it as is.</div></div></div></div><div class="step__visual"><video class="step__media" autoplay muted loop playsinline preload="auto" aria-label="Remix what's inside"><source src="media/step-3.mp4" type="video/mp4"></video></div></li>
+            <li class="step" data-step="3"><div class="step__head"><div class="step__row rv"><span class="step__badge">4</span><div><div class="step__title">Maintain your portfolio in one click</div><div class="step__body">Built-in rebalancing alerts let you know when your portfolio drifts from your targets. Then, one click brings every holding back in line.</div></div></div></div><div class="step__visual"><video class="step__media" autoplay muted loop playsinline preload="auto" aria-label="Maintain in one click"><source src="media/step-4.mp4" type="video/mp4"></video></div></li>
+          </ol>
+          <button class="howto__cta rv" type="button">Get started</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== COMPARISON ===== -->
+  <section data-ag class="cmp">
+    <p class="cmp__eyebrow rv">Custom indexing vs. ETFs vs. individual stocks</p>
+    <h2 class="cmp__title rv-h">The control of picking stocks.<br>The ease of an ETF. All in one portfolio.</h2>
+
+    <!-- desktop table -->
+    <div class="ct-wrap rv">
+      <div class="ct">
+        <div class="ct-head" style="display:contents">
+          <div class="ct-cell ct-feat">Feature</div>
+          <div class="ct-cell col-ci">Custom Indexing</div>
+          <div class="ct-cell">ETFs</div>
+          <div class="ct-cell">Individual Stocks</div>
+        </div>
+        
+      <div class="ct-cell ct-feat"><div class="ct-name">One-click portfolio rebalancing</div><div class="ct-sub">Streamlined portfolio maintenance</div></div>
+      <div class="ct-cell col-ci"><svg class="ic"><use href="#ic-check"/></svg></div>
+      <div class="ct-cell"><span class="cval">Done by fund</span></div>
+      <div class="ct-cell"><svg class="ic"><use href="#ic-x"/></svg></div>
+      <div class="ct-cell ct-feat"><div class="ct-name">Built-in portfolio alerts</div><div class="ct-sub">Know when your portfolio needs rebalancing</div></div>
+      <div class="ct-cell col-ci"><svg class="ic"><use href="#ic-check"/></svg></div>
+      <div class="ct-cell"><svg class="ic"><use href="#ic-x"/></svg></div>
+      <div class="ct-cell"><svg class="ic"><use href="#ic-x"/></svg></div>
+      <div class="ct-cell ct-feat"><div class="ct-name">Quick start with a template</div><div class="ct-sub">Choose from a library of readymade portfolios</div></div>
+      <div class="ct-cell col-ci"><svg class="ic"><use href="#ic-check"/></svg></div>
+      <div class="ct-cell"><svg class="ic"><use href="#ic-x"/></svg></div>
+      <div class="ct-cell"><svg class="ic"><use href="#ic-x"/></svg></div>
+      <div class="ct-cell ct-feat"><div class="ct-name">Customize at stock and sector level</div><div class="ct-sub">Fine-tune what&rsquo;s in the portfolio</div></div>
+      <div class="ct-cell col-ci"><svg class="ic"><use href="#ic-check"/></svg></div>
+      <div class="ct-cell"><svg class="ic"><use href="#ic-x"/></svg></div>
+      <div class="ct-cell"><span class="cval">Just stocks</span></div>
+      <div class="ct-cell ct-feat"><div class="ct-name">No fees</div><div class="ct-sub">No management fees, MERs<sup>1</sup>, or trading commissions</div></div>
+      <div class="ct-cell col-ci"><svg class="ic"><use href="#ic-check"/></svg></div>
+      <div class="ct-cell"><svg class="ic"><use href="#ic-x"/></svg></div>
+      <div class="ct-cell"><svg class="ic"><use href="#ic-check"/></svg></div>
+      <div class="ct-cell ct-feat"><div class="ct-name">Fractional shares</div><div class="ct-sub">Access to any security with just $1</div></div>
+      <div class="ct-cell col-ci"><svg class="ic"><use href="#ic-check"/></svg></div>
+      <div class="ct-cell"><span class="cval">Done by fund</span></div>
+      <div class="ct-cell"><svg class="ic"><use href="#ic-check"/></svg></div>
+      <div class="ct-cell ct-feat"><div class="ct-name">Own actual stocks</div><div class="ct-sub">Full ownership and voting rights</div></div>
+      <div class="ct-cell col-ci"><svg class="ic"><use href="#ic-check"/></svg></div>
+      <div class="ct-cell"><svg class="ic"><use href="#ic-x"/></svg></div>
+      <div class="ct-cell"><svg class="ic"><use href="#ic-check"/></svg></div>
+      </div>
+    </div>
+
+    <!-- mobile cards -->
+    <div class="cc-wrap">
+    <div class="cc rv">
+      <div class="cc-head"><div class="ct-name">One-click portfolio rebalancing</div><div class="ct-sub">Streamlined portfolio maintenance</div></div>
+      <div class="cc-row col-ci"><span class="cc-label">Custom Indexing</span><svg class="ic"><use href="#ic-check"/></svg></div>
+      <div class="cc-row"><span class="cc-label">ETFs</span><span class="cval">Done by fund</span></div>
+      <div class="cc-row"><span class="cc-label">Individual stocks</span><svg class="ic"><use href="#ic-x"/></svg></div>
+    </div>
+    <div class="cc rv">
+      <div class="cc-head"><div class="ct-name">Built-in portfolio alerts</div><div class="ct-sub">Know when your portfolio needs rebalancing</div></div>
+      <div class="cc-row col-ci"><span class="cc-label">Custom Indexing</span><svg class="ic"><use href="#ic-check"/></svg></div>
+      <div class="cc-row"><span class="cc-label">ETFs</span><svg class="ic"><use href="#ic-x"/></svg></div>
+      <div class="cc-row"><span class="cc-label">Individual stocks</span><svg class="ic"><use href="#ic-x"/></svg></div>
+    </div>
+    <div class="cc rv">
+      <div class="cc-head"><div class="ct-name">Quick start with a template</div><div class="ct-sub">Choose from a library of readymade portfolios</div></div>
+      <div class="cc-row col-ci"><span class="cc-label">Custom Indexing</span><svg class="ic"><use href="#ic-check"/></svg></div>
+      <div class="cc-row"><span class="cc-label">ETFs</span><svg class="ic"><use href="#ic-x"/></svg></div>
+      <div class="cc-row"><span class="cc-label">Individual stocks</span><svg class="ic"><use href="#ic-x"/></svg></div>
+    </div>
+    <div class="cc rv">
+      <div class="cc-head"><div class="ct-name">Customize at stock and sector level</div><div class="ct-sub">Fine-tune what&rsquo;s in the portfolio</div></div>
+      <div class="cc-row col-ci"><span class="cc-label">Custom Indexing</span><svg class="ic"><use href="#ic-check"/></svg></div>
+      <div class="cc-row"><span class="cc-label">ETFs</span><svg class="ic"><use href="#ic-x"/></svg></div>
+      <div class="cc-row"><span class="cc-label">Individual stocks</span><span class="cval">Just stocks</span></div>
+    </div>
+    <div class="cc rv">
+      <div class="cc-head"><div class="ct-name">No fees</div><div class="ct-sub">No management fees, MERs<sup>1</sup>, or trading commissions</div></div>
+      <div class="cc-row col-ci"><span class="cc-label">Custom Indexing</span><svg class="ic"><use href="#ic-check"/></svg></div>
+      <div class="cc-row"><span class="cc-label">ETFs</span><svg class="ic"><use href="#ic-x"/></svg></div>
+      <div class="cc-row"><span class="cc-label">Individual stocks</span><svg class="ic"><use href="#ic-check"/></svg></div>
+    </div>
+    <div class="cc rv">
+      <div class="cc-head"><div class="ct-name">Fractional shares</div><div class="ct-sub">Access to any security with just $1</div></div>
+      <div class="cc-row col-ci"><span class="cc-label">Custom Indexing</span><svg class="ic"><use href="#ic-check"/></svg></div>
+      <div class="cc-row"><span class="cc-label">ETFs</span><span class="cval">Done by fund</span></div>
+      <div class="cc-row"><span class="cc-label">Individual stocks</span><svg class="ic"><use href="#ic-check"/></svg></div>
+    </div>
+    <div class="cc rv">
+      <div class="cc-head"><div class="ct-name">Own actual stocks</div><div class="ct-sub">Full ownership and voting rights</div></div>
+      <div class="cc-row col-ci"><span class="cc-label">Custom Indexing</span><svg class="ic"><use href="#ic-check"/></svg></div>
+      <div class="cc-row"><span class="cc-label">ETFs</span><svg class="ic"><use href="#ic-x"/></svg></div>
+      <div class="cc-row"><span class="cc-label">Individual stocks</span><svg class="ic"><use href="#ic-check"/></svg></div>
+    </div></div>
+  </section>
+
+  <!-- STARTERPACK CAROUSEL -->
+  <section data-ag class="sp">
+  <div class="sp__pin">
+    <div class="sp__head">
+      <p class="sp__eyebrow rv">Top community-made indices</p>
+      <h2 class="sp__title rv-h">Choose a starting point</h2>
+      <p class="sp__sub rv">Need inspiration? Find a likeminded investor from the Canadian finance community.</p>
+    </div>
+    <div class="sp__viewport" id="spVp"><div class="sp__track" id="spTrack"><div class="card"><div class="card__inner"><div class="face front"><div class="cf">
+          <div class="cf__title" style="color:#86E3BA">The GIRL Index</div>
+          <div class="cf__author"><span class="ava" style="border-color:#86E3BA">JY</span><span class="cf__name" style="color:#86E3BA">Joyee Yang</span></div>
+          <p class="cf__desc">Prioritize long-term growth with a blend of global tech, emerging markets, dividend aristocrats and women-led companies.</p>
+          <div class="cf__stats"><div><span class="lab">1Y</span><span class="val">+8%</span></div><div><span class="lab">5Y</span><span class="val">+42%</span></div><div class="r"><span class="lab">AS OF</span><span class="val">2026.05.01</span></div></div>
+          <div class="chart"><div class="chart-big"><div class="alloc" style="flex:78;border-color:rgba(134,227,186,.6)"><span class="ap">78%</span><span class="al">Other (ETFs)</span></div><div class="alloc" style="flex:8;border-color:rgba(134,227,186,.6)"><span class="ap">8%</span><span class="al">Consumer Staples</span></div><div class="alloc" style="flex:8;border-color:rgba(134,227,186,.6)"><span class="ap">8%</span><span class="al">Consumer Discretionary</span></div></div><div class="chart-small"><div class="srow"><div class="alloc sm" style="border-color:rgba(134,227,186,.6)"><span class="ap">2%</span><span class="al">Financials</span></div><div class="alloc sm" style="border-color:rgba(134,227,186,.6)"><span class="ap">2%</span><span class="al">Information Technology</span></div></div><div class="srow"><div class="alloc sm" style="border-color:rgba(134,227,186,.6)"><span class="ap">2%</span><span class="al">Health Care</span></div><div class="alloc sm" style="border-color:rgba(134,227,186,.6)"><span class="ap">2%</span><span class="al">Real Estate</span></div></div></div></div>
+          <div class="cf__btns"><button class="btn flip-back"><span class="lf">See stock breakdown</span><span class="ls">See breakdown</span></button><button class="btn light"><span class="lf">Start with this index</span><span class="ls">Get started</span></button></div>
+        </div></div><div class="face back"><div class="cb">
+          <div class="cb__title">The GIRL Index</div>
+          <div class="cb__q"><span class="ava dark">JY</span><div class="cb__qt"><p class="q">“GIRL stands for Global Innovation and Resilient Leaders—it’s built around the idea of investing in the future.”</p><p class="qa">—Joyee Yang</p></div></div>
+          <div class="cb__div"></div>
+          <div class="cb__hl">Top Holdings</div>
+          <div class="tblbox"><table class="tbl"><colgroup><col class="c-tk"><col class="c-nm"><col class="c-sec"><col class="c-wt"></colgroup>
+            <thead><tr><th>Ticker</th><th>Name</th><th>Sector</th><th class="wt">Weight</th></tr></thead>
+            <tbody><tr><td class="tk">VOO</td><td class="nm">Vanguard S&P 500 ETF</td><td class="sec">ETF</td><td class="wt">30%</td></tr><tr><td class="tk">QQQM</td><td class="nm">Invesco NASDAQ 100 ETF</td><td class="sec">ETF</td><td class="wt">26%</td></tr><tr><td class="tk">VWO</td><td class="nm">Vanguard Emerging Markets ETF</td><td class="sec">ETF</td><td class="wt">17%</td></tr><tr><td class="tk">WOMN</td><td class="nm">Impact Shares Womens Empwmt ETF</td><td class="sec">ETF</td><td class="wt">5%</td></tr><tr><td class="tk">AMD</td><td class="nm">Advanced Micro Devices Inc</td><td class="sec">Technology</td><td class="wt">2%</td></tr><tr><td class="tk">GM</td><td class="nm">General Motors</td><td class="sec">Cons. Cyclical</td><td class="wt">2%</td></tr><tr><td class="tk">C</td><td class="nm">Citigroup Inc</td><td class="sec">Financials</td><td class="wt">2%</td></tr><tr><td class="tk">BBY</td><td class="nm">Best Buy</td><td class="sec">Cons. Cyclical</td><td class="wt">2%</td></tr><tr><td class="tk">PEP</td><td class="nm">Pepsi</td><td class="sec">Cons. Staples</td><td class="wt">2%</td></tr><tr><td class="tk">KO</td><td class="nm">Coca-Cola</td><td class="sec">Cons. Staples</td><td class="wt">2%</td></tr></tbody></table></div>
+          <div class="cb__btns"><button class="btn flip-front">Back</button><button class="btn dark"><span class="lf">Start with this index</span><span class="ls">Get started</span></button></div>
+        </div></div></div></div><div class="card"><div class="card__inner"><div class="face front"><div class="cf">
+          <div class="cf__title" style="color:#8A95FB">Hidden AI Winners</div>
+          <div class="cf__author"><span class="ava" style="border-color:#8A95FB">BSD</span><span class="cf__name" style="color:#8A95FB">Braden, Simon, and Dan</span></div>
+          <p class="cf__desc">Go beyond the AI giants, targeting the infrastructure and enablers powering the AI economy.</p>
+          <div class="cf__stats"><div><span class="lab">1Y</span><span class="val">+8%</span></div><div><span class="lab">5Y</span><span class="val">+42%</span></div><div class="r"><span class="lab">AS OF</span><span class="val">2026.05.01</span></div></div>
+          <div class="chart"><div class="chart-big"><div class="alloc" style="flex:46.6;border-color:rgba(138,149,251,.6)"><span class="ap">46.6%</span><span class="al">Industrials</span></div><div class="alloc" style="flex:29.9;border-color:rgba(138,149,251,.6)"><span class="ap">29.9%</span><span class="al">Information Technology</span></div><div class="alloc" style="flex:16.3;border-color:rgba(138,149,251,.6)"><span class="ap">16.3%</span><span class="al">Utilities</span></div></div><div class="chart-small"><div class="srow"><div class="alloc sm" style="border-color:rgba(138,149,251,.6)"><span class="ap">2.9%</span><span class="al">Energy</span></div><div class="alloc sm" style="border-color:rgba(138,149,251,.6)"><span class="ap">4.1%</span><span class="al">Materials</span></div></div></div></div>
+          <div class="cf__btns"><button class="btn flip-back"><span class="lf">See stock breakdown</span><span class="ls">See breakdown</span></button><button class="btn light"><span class="lf">Start with this index</span><span class="ls">Get started</span></button></div>
+        </div></div><div class="face back"><div class="cb">
+          <div class="cb__title">Hidden AI Winners</div>
+          <div class="cb__q"><span class="ava dark">BSD</span><div class="cb__qt"><p class="q">“The goal: finding companies that can benefit from long-term structural trends, rather than simply the largest companies.”</p><p class="qa">—Braden, Simon, and Dan</p></div></div>
+          <div class="cb__div"></div>
+          <div class="cb__hl">Top Holdings</div>
+          <div class="tblbox"><table class="tbl"><colgroup><col class="c-tk"><col class="c-nm"><col class="c-sec"><col class="c-wt"></colgroup>
+            <thead><tr><th>Ticker</th><th>Name</th><th>Sector</th><th class="wt">Weight</th></tr></thead>
+            <tbody><tr><td class="tk">GEV</td><td class="nm">GE Vernova Inc</td><td class="sec">Industrials</td><td class="wt">10%</td></tr><tr><td class="tk">NEE</td><td class="nm">NextEra Energy Inc</td><td class="sec">Utilities</td><td class="wt">10%</td></tr><tr><td class="tk">ASML</td><td class="nm">ASML Holding NV</td><td class="sec">Technology</td><td class="wt">10%</td></tr><tr><td class="tk">ETN</td><td class="nm">Eaton Corporation PLC</td><td class="sec">Industrials</td><td class="wt">8.9%</td></tr><tr><td class="tk">GLW</td><td class="nm">Corning Inc</td><td class="sec">Technology</td><td class="wt">7.9%</td></tr><tr><td class="tk">VRT</td><td class="nm">Vertiv Holdings Co</td><td class="sec">Industrials</td><td class="wt">6.8%</td></tr><tr><td class="tk">CEG</td><td class="nm">Constellation Energy Corp</td><td class="sec">Utilities</td><td class="wt">6.2%</td></tr><tr><td class="tk">TT</td><td class="nm">Trane Technologies PLC</td><td class="sec">Industrials</td><td class="wt">5.9%</td></tr><tr><td class="tk">PWR</td><td class="nm">Quanta Services Inc</td><td class="sec">Industrials</td><td class="wt">5.2%</td></tr><tr><td class="tk">SNPS</td><td class="nm">Synopsys Inc</td><td class="sec">Technology</td><td class="wt">5.2%</td></tr></tbody></table></div>
+          <div class="cb__btns"><button class="btn flip-front">Back</button><button class="btn dark"><span class="lf">Start with this index</span><span class="ls">Get started</span></button></div>
+        </div></div></div></div><div class="card"><div class="card__inner"><div class="face front"><div class="cf">
+          <div class="cf__title" style="color:#EEE37C">The New Money Index</div>
+          <div class="cf__author"><span class="ava" style="border-color:#EEE37C">TS</span><span class="cf__name" style="color:#EEE37C">Tal Schwartz</span></div>
+          <p class="cf__desc">Put money behind the companies redesigning how money works—from how you pay and invest, to how you’re insured.</p>
+          <div class="cf__stats"><div><span class="lab">1Y</span><span class="val">+8%</span></div><div><span class="lab">5Y</span><span class="val">+42%</span></div><div class="r"><span class="lab">AS OF</span><span class="val">2026.05.01</span></div></div>
+          <div class="chart"><div class="chart-big"><div class="alloc" style="flex:64.9;border-color:rgba(238,227,124,.6)"><span class="ap">64.9%</span><span class="al">Financials</span></div><div class="alloc" style="flex:21.3;border-color:rgba(238,227,124,.6)"><span class="ap">21.3%</span><span class="al">Information Technology</span></div><div class="alloc" style="flex:10.9;border-color:rgba(238,227,124,.6)"><span class="ap">10.9%</span><span class="al">Consumer Discretionary</span></div></div><div class="chart-small"><div class="srow"><div class="alloc sm" style="border-color:rgba(238,227,124,.6)"><span class="ap">1.4%</span><span class="al">Real Estate</span></div><div class="alloc sm" style="border-color:rgba(238,227,124,.6)"><span class="ap">1.2%</span><span class="al">Health Care</span></div></div></div></div>
+          <div class="cf__btns"><button class="btn flip-back"><span class="lf">See stock breakdown</span><span class="ls">See breakdown</span></button><button class="btn light"><span class="lf">Start with this index</span><span class="ls">Get started</span></button></div>
+        </div></div><div class="face back"><div class="cb">
+          <div class="cb__title">The New Money Index</div>
+          <div class="cb__q"><span class="ava dark">TS</span><div class="cb__qt"><p class="q">“This index is basically a map of where financial services have moved outside the walls of traditional banks.”</p><p class="qa">—Tal Schwartz</p></div></div>
+          <div class="cb__div"></div>
+          <div class="cb__hl">Top Holdings</div>
+          <div class="tblbox"><table class="tbl"><colgroup><col class="c-tk"><col class="c-nm"><col class="c-sec"><col class="c-wt"></colgroup>
+            <thead><tr><th>Ticker</th><th>Name</th><th>Sector</th><th class="wt">Weight</th></tr></thead>
+            <tbody><tr><td class="tk">SHOP</td><td class="nm">Shopify Inc</td><td class="sec">Technology</td><td class="wt">21.2%</td></tr><tr><td class="tk">PYPL</td><td class="nm">PayPal Holdings Inc</td><td class="sec">Fin. Services</td><td class="wt">20.6%</td></tr><tr><td class="tk">MELI</td><td class="nm">MercadoLibre Inc</td><td class="sec">Cons. Cyclical</td><td class="wt">15.7%</td></tr><tr><td class="tk">NU</td><td class="nm">Nu Holdings Ltd.</td><td class="sec">Fin. Services</td><td class="wt">9.9%</td></tr><tr><td class="tk">COIN</td><td class="nm">Coinbase Global Inc</td><td class="sec">Fin. Services</td><td class="wt">4.8%</td></tr><tr><td class="tk">BILL</td><td class="nm">BILL Holdings Inc</td><td class="sec">Technology</td><td class="wt">3.3%</td></tr><tr><td class="tk">TOST</td><td class="nm">Toast Inc</td><td class="sec">Technology</td><td class="wt">3.1%</td></tr><tr><td class="tk">HOOD</td><td class="nm">Robinhood Markets Inc</td><td class="sec">Fin. Services</td><td class="wt">2.6%</td></tr><tr><td class="tk">SOFI</td><td class="nm">SoFi Technologies Inc</td><td class="sec">Fin. Services</td><td class="wt">2%</td></tr><tr><td class="tk">AFRM</td><td class="nm">Affirm Holdings Inc</td><td class="sec">Fin. Services</td><td class="wt">1%</td></tr></tbody></table></div>
+          <div class="cb__btns"><button class="btn flip-front">Back</button><button class="btn dark"><span class="lf">Start with this index</span><span class="ls">Get started</span></button></div>
+        </div></div></div></div><div class="card"><div class="card__inner"><div class="face front"><div class="cf">
+          <div class="cf__title" style="color:#FCAF65">The Humbled Hedge</div>
+          <div class="cf__author"><span class="ava" style="border-color:#FCAF65">SH</span><span class="cf__name" style="color:#FCAF65">Shay Huang</span></div>
+          <p class="cf__desc">A diversified, long-term portfolio built to hold steady while your active strategies do their thing.</p>
+          <div class="cf__stats"><div><span class="lab">1Y</span><span class="val">+8%</span></div><div><span class="lab">5Y</span><span class="val">+42%</span></div><div class="r"><span class="lab">AS OF</span><span class="val">2026.05.01</span></div></div>
+          <div class="chart"><div class="chart-big"><div class="alloc" style="flex:14.2;border-color:rgba(252,175,101,.6)"><span class="ap">14.2%</span><span class="al">Financials</span></div><div class="alloc" style="flex:14.1;border-color:rgba(252,175,101,.6)"><span class="ap">14.1%</span><span class="al">Health Care</span></div><div class="alloc" style="flex:14.1;border-color:rgba(252,175,101,.6)"><span class="ap">14.1%</span><span class="al">Consumer Staples</span></div><div class="alloc" style="flex:12.6;border-color:rgba(252,175,101,.6)"><span class="ap">12.6%</span><span class="al">Industrials</span></div><div class="alloc" style="flex:10.1;border-color:rgba(252,175,101,.6)"><span class="ap">10.1%</span><span class="al">Consumer Discretionary</span></div><div class="alloc" style="flex:9;border-color:rgba(252,175,101,.6)"><span class="ap">9%</span><span class="al">Information Technology</span></div><div class="alloc" style="flex:7;border-color:rgba(252,175,101,.6)"><span class="ap">7%</span><span class="al">Energy</span></div></div></div>
+          <div class="cf__btns"><button class="btn flip-back"><span class="lf">See stock breakdown</span><span class="ls">See breakdown</span></button><button class="btn light"><span class="lf">Start with this index</span><span class="ls">Get started</span></button></div>
+        </div></div><div class="face back"><div class="cb">
+          <div class="cb__title">The Humbled Hedge</div>
+          <div class="cb__q"><span class="ava dark">SH</span><div class="cb__qt"><p class="q">“I kept some exposure to tech but focused more on defensive sectors like healthcare, financials, and consumer staples.”</p><p class="qa">—Shay Huang</p></div></div>
+          <div class="cb__div"></div>
+          <div class="cb__hl">Top Holdings</div>
+          <div class="tblbox"><table class="tbl"><colgroup><col class="c-tk"><col class="c-nm"><col class="c-sec"><col class="c-wt"></colgroup>
+            <thead><tr><th>Ticker</th><th>Name</th><th>Sector</th><th class="wt">Weight</th></tr></thead>
+            <tbody><tr><td class="tk">JPM</td><td class="nm">JPMorgan Chase & Co</td><td class="sec">Fin. Services</td><td class="wt">3.5%</td></tr><tr><td class="tk">V</td><td class="nm">Visa Inc</td><td class="sec">Fin. Services</td><td class="wt">3.5%</td></tr><tr><td class="tk">MA</td><td class="nm">Mastercard Inc</td><td class="sec">Fin. Services</td><td class="wt">3.5%</td></tr><tr><td class="tk">UNH</td><td class="nm">UnitedHealth Group Inc</td><td class="sec">Healthcare</td><td class="wt">3.5%</td></tr><tr><td class="tk">LLY</td><td class="nm">Eli Lilly And Co</td><td class="sec">Healthcare</td><td class="wt">3.5%</td></tr><tr><td class="tk">BRK.B</td><td class="nm">Berkshire Hathaway Inc Class B</td><td class="sec">Fin. Services</td><td class="wt">3.5%</td></tr><tr><td class="tk">COST</td><td class="nm">Costco Wholesale Corp</td><td class="sec">Cons. Defensive</td><td class="wt">3.5%</td></tr><tr><td class="tk">HD</td><td class="nm">Home Depot Inc</td><td class="sec">Cons. Cyclical</td><td class="wt">3.5%</td></tr><tr><td class="tk">CAT</td><td class="nm">Caterpillar Inc</td><td class="sec">Industrials</td><td class="wt">3.5%</td></tr><tr><td class="tk">PG</td><td class="nm">Procter & Gamble Co</td><td class="sec">Cons. Defensive</td><td class="wt">3.5%</td></tr></tbody></table></div>
+          <div class="cb__btns"><button class="btn flip-front">Back</button><button class="btn dark"><span class="lf">Start with this index</span><span class="ls">Get started</span></button></div>
+        </div></div></div></div><div class="card"><div class="card__inner"><div class="face front"><div class="cf">
+          <div class="cf__title" style="color:#FF868B">The Tailored T-Shirt</div>
+          <div class="cf__author"><span class="ava" style="border-color:#FF868B">AB</span><span class="cf__name" style="color:#FF868B">Adrian Bar</span></div>
+          <p class="cf__desc">Top US stocks without weapons manufacturers, less overpriced tech, and more blue-chip Canadian companies.</p>
+          <div class="cf__stats"><div><span class="lab">1Y</span><span class="val">+8%</span></div><div><span class="lab">5Y</span><span class="val">+42%</span></div><div class="r"><span class="lab">AS OF</span><span class="val">2026.05.01</span></div></div>
+          <div class="chart"><div class="chart-big"><div class="alloc" style="flex:29.7;border-color:rgba(255,134,139,.6)"><span class="ap">29.7%</span><span class="al">Information Technology</span></div><div class="alloc" style="flex:21.9;border-color:rgba(255,134,139,.6)"><span class="ap">21.9%</span><span class="al">Financials</span></div><div class="alloc" style="flex:11.1;border-color:rgba(255,134,139,.6)"><span class="ap">11.1%</span><span class="al">Communication Services</span></div><div class="alloc" style="flex:8.5;border-color:rgba(255,134,139,.6)"><span class="ap">8.5%</span><span class="al">Consumer Discretionary</span></div><div class="alloc" style="flex:7.1;border-color:rgba(255,134,139,.6)"><span class="ap">7.1%</span><span class="al">Consumer Staples</span></div><div class="alloc" style="flex:6;border-color:rgba(255,134,139,.6)"><span class="ap">6%</span><span class="al">Energy</span></div><div class="alloc" style="flex:5.9;border-color:rgba(255,134,139,.6)"><span class="ap">5.9%</span><span class="al">Health Care</span></div></div></div>
+          <div class="cf__btns"><button class="btn flip-back"><span class="lf">See stock breakdown</span><span class="ls">See breakdown</span></button><button class="btn light"><span class="lf">Start with this index</span><span class="ls">Get started</span></button></div>
+        </div></div><div class="face back"><div class="cb">
+          <div class="cb__title">The Tailored T-Shirt</div>
+          <div class="cb__q"><span class="ava dark">AB</span><div class="cb__qt"><p class="q">“The S&P is really dominated by the big players. I reduced tech so that no holding is above 5%, bumped up lower risk, defensive blue chips.”</p><p class="qa">—Adrian Bar</p></div></div>
+          <div class="cb__div"></div>
+          <div class="cb__hl">Top Holdings</div>
+          <div class="tblbox"><table class="tbl"><colgroup><col class="c-tk"><col class="c-nm"><col class="c-sec"><col class="c-wt"></colgroup>
+            <thead><tr><th>Ticker</th><th>Name</th><th>Sector</th><th class="wt">Weight</th></tr></thead>
+            <tbody><tr><td class="tk">NVDA</td><td class="nm">NVIDIA Corp</td><td class="sec">Technology</td><td class="wt">5.6%</td></tr><tr><td class="tk">AAPL</td><td class="nm">Apple Inc</td><td class="sec">Technology</td><td class="wt">4.5%</td></tr><tr><td class="tk">MSFT</td><td class="nm">Microsoft Corp</td><td class="sec">Technology</td><td class="wt">4.5%</td></tr><tr><td class="tk">AMZN</td><td class="nm">Amazon.com Inc</td><td class="sec">Cons. Cyclical</td><td class="wt">4.0%</td></tr><tr><td class="tk">GOOGL</td><td class="nm">Alphabet Inc Class A</td><td class="sec">Comm. Services</td><td class="wt">2.5%</td></tr><tr><td class="tk">GOOG</td><td class="nm">Alphabet Inc Class C</td><td class="sec">Comm. Services</td><td class="wt">2.1%</td></tr><tr><td class="tk">META</td><td class="nm">Meta Platforms Inc</td><td class="sec">Comm. Services</td><td class="wt">2.1%</td></tr><tr><td class="tk">AVGO</td><td class="nm">Broadcom Inc</td><td class="sec">Technology</td><td class="wt">2.0%</td></tr><tr><td class="tk">BRK.B</td><td class="nm">Berkshire Hathaway Inc Class B</td><td class="sec">Fin. Services</td><td class="wt">2.0%</td></tr><tr><td class="tk">COST</td><td class="nm">Costco Wholesale Corp</td><td class="sec">Cons. Defensive</td><td class="wt">1.8%</td></tr></tbody></table></div>
+          <div class="cb__btns"><button class="btn flip-front">Back</button><button class="btn dark"><span class="lf">Start with this index</span><span class="ls">Get started</span></button></div>
+        </div></div></div></div><div class="card"><div class="card__inner"><div class="face front"><div class="cf">
+          <div class="cf__title" style="color:#86C2E3">Defence Wins Championships</div>
+          <div class="cf__author"><span class="ava" style="border-color:#86C2E3">ZH</span><span class="cf__name" style="color:#86C2E3">Zac Hartley</span></div>
+          <p class="cf__desc">Invest in where global defence spending is actually going: AI, autonomous systems, and space infrastructure.</p>
+          <div class="cf__stats"><div><span class="lab">1Y</span><span class="val">+8%</span></div><div><span class="lab">5Y</span><span class="val">+42%</span></div><div class="r"><span class="lab">AS OF</span><span class="val">2026.05.01</span></div></div>
+          <div class="chart"><div class="chart-big"><div class="alloc" style="flex:80;border-color:rgba(134,194,227,.6)"><span class="ap">80%</span><span class="al">Industrials</span></div><div class="alloc" style="flex:20;border-color:rgba(134,194,227,.6)"><span class="ap">20%</span><span class="al">Information Technology</span></div></div></div>
+          <div class="cf__btns"><button class="btn flip-back"><span class="lf">See stock breakdown</span><span class="ls">See breakdown</span></button><button class="btn light"><span class="lf">Start with this index</span><span class="ls">Get started</span></button></div>
+        </div></div><div class="face back"><div class="cb">
+          <div class="cb__title">Defence Wins Championships</div>
+          <div class="cb__q"><span class="ava dark">ZH</span><div class="cb__qt"><p class="q">“Defence spending around the world is surging so I want an index that focuses on the companies landing these contracts.”</p><p class="qa">—Zac Hartley</p></div></div>
+          <div class="cb__div"></div>
+          <div class="cb__hl">Top Holdings</div>
+          <div class="tblbox"><table class="tbl"><colgroup><col class="c-tk"><col class="c-nm"><col class="c-sec"><col class="c-wt"></colgroup>
+            <thead><tr><th>Ticker</th><th>Name</th><th>Sector</th><th class="wt">Weight</th></tr></thead>
+            <tbody><tr><td class="tk">AVAV</td><td class="nm">AeroVironment, Inc.</td><td class="sec">Industrials</td><td class="wt">10%</td></tr><tr><td class="tk">PLTR</td><td class="nm">Palantir Technologies Inc</td><td class="sec">Technology</td><td class="wt">10%</td></tr><tr><td class="tk">RTX</td><td class="nm">Rtx Corp</td><td class="sec">Industrials</td><td class="wt">10%</td></tr><tr><td class="tk">LMT</td><td class="nm">Lockheed Martin Corp</td><td class="sec">Industrials</td><td class="wt">10%</td></tr><tr><td class="tk">NOC</td><td class="nm">Northrop Grumman Corp</td><td class="sec">Industrials</td><td class="wt">10%</td></tr><tr><td class="tk">GD</td><td class="nm">General Dynamics Corp</td><td class="sec">Industrials</td><td class="wt">10%</td></tr><tr><td class="tk">KTOS</td><td class="nm">Kratos Defense & Security</td><td class="sec">Industrials</td><td class="wt">5%</td></tr><tr><td class="tk">LHX</td><td class="nm">L3harris Technologies, Inc</td><td class="sec">Industrials</td><td class="wt">5%</td></tr><tr><td class="tk">BA</td><td class="nm">Boeing Co</td><td class="sec">Industrials</td><td class="wt">5%</td></tr></tbody></table></div>
+          <div class="cb__btns"><button class="btn flip-front">Back</button><button class="btn dark"><span class="lf">Start with this index</span><span class="ls">Get started</span></button></div>
+        </div></div></div></div><div class="card"><div class="card__inner"><div class="face front"><div class="cf">
+          <div class="cf__title" style="color:#B7DF95">Innovation’s Infrastructure</div>
+          <div class="cf__author"><span class="ava" style="border-color:#B7DF95">LW</span><span class="cf__name" style="color:#B7DF95">Lina Wu</span></div>
+          <p class="cf__desc">Skip flashy tech for critical minerals, semiconductors, energy infrastructure and cloud computing.</p>
+          <div class="cf__stats"><div><span class="lab">1Y</span><span class="val">+8%</span></div><div><span class="lab">5Y</span><span class="val">+42%</span></div><div class="r"><span class="lab">AS OF</span><span class="val">2026.05.01</span></div></div>
+          <div class="chart"><div class="chart-big"><div class="alloc" style="flex:55;border-color:rgba(183,223,149,.6)"><span class="ap">55%</span><span class="al">Information Technology</span></div><div class="alloc" style="flex:15;border-color:rgba(183,223,149,.6)"><span class="ap">15%</span><span class="al">Industrials</span></div><div class="alloc" style="flex:12;border-color:rgba(183,223,149,.6)"><span class="ap">12%</span><span class="al">Materials</span></div><div class="alloc" style="flex:9;border-color:rgba(183,223,149,.6)"><span class="ap">9%</span><span class="al">Utilities</span></div><div class="alloc" style="flex:9;border-color:rgba(183,223,149,.6)"><span class="ap">9%</span><span class="al">Energy</span></div></div></div>
+          <div class="cf__btns"><button class="btn flip-back"><span class="lf">See stock breakdown</span><span class="ls">See breakdown</span></button><button class="btn light"><span class="lf">Start with this index</span><span class="ls">Get started</span></button></div>
+        </div></div><div class="face back"><div class="cb">
+          <div class="cb__title">Innovation’s Infrastructure</div>
+          <div class="cb__q"><span class="ava dark">LW</span><div class="cb__qt"><p class="q">“This is how I see the future of AI, energy, and infrastructure. I still get diversification, but with less chaos and more customization.”</p><p class="qa">—Lina Wu</p></div></div>
+          <div class="cb__div"></div>
+          <div class="cb__hl">Top Holdings</div>
+          <div class="tblbox"><table class="tbl"><colgroup><col class="c-tk"><col class="c-nm"><col class="c-sec"><col class="c-wt"></colgroup>
+            <thead><tr><th>Ticker</th><th>Name</th><th>Sector</th><th class="wt">Weight</th></tr></thead>
+            <tbody><tr><td class="tk">LITE</td><td class="nm">Lumentum Holdings Inc</td><td class="sec">Technology</td><td class="wt">10%</td></tr><tr><td class="tk">CIEN</td><td class="nm">Ciena Corp</td><td class="sec">Technology</td><td class="wt">9%</td></tr><tr><td class="tk">CEG</td><td class="nm">Constellation Energy Corp</td><td class="sec">Utilities</td><td class="wt">9%</td></tr><tr><td class="tk">ASML</td><td class="nm">ASML Holding NV</td><td class="sec">Technology</td><td class="wt">8%</td></tr><tr><td class="tk">GEV</td><td class="nm">GE Vernova Inc</td><td class="sec">Industrials</td><td class="wt">8%</td></tr><tr><td class="tk">NBIS</td><td class="nm">Nebius Group NV</td><td class="sec">Comm. Services</td><td class="wt">8%</td></tr><tr><td class="tk">VRT</td><td class="nm">Vertiv Holdings Co</td><td class="sec">Industrials</td><td class="wt">7%</td></tr><tr><td class="tk">TSM</td><td class="nm">Taiwan Semicndctr Mnufctr</td><td class="sec">Technology</td><td class="wt">7%</td></tr><tr><td class="tk">GLW</td><td class="nm">Corning Inc</td><td class="sec">Technology</td><td class="wt">6%</td></tr></tbody></table></div>
+          <div class="cb__btns"><button class="btn flip-front">Back</button><button class="btn dark"><span class="lf">Start with this index</span><span class="ls">Get started</span></button></div>
+        </div></div></div></div><div class="sp__end" aria-hidden="true"></div></div></div>
+    <div class="sp__nav">
+      <button class="sp__arrow prev" id="spPrev" aria-label="Previous" disabled><svg viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button class="sp__arrow next" id="spNext" aria-label="Next"><svg viewBox="0 0 24 24" fill="none"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+  </div>
+  </section>
+
+  <!-- CONTEST -->
+  <section data-ag class="contest">
+    <div class="contest__text">
+      <p class="contest__eyebrow rv">Contest: Remix your life</p>
+      <h2 class="contest__title rv-h">Three days to reflect.<br>$70,000 to reset. One winner.</h2>
+      <p class="contest__body rv">The best decisions happen when you have room to think and the means to act. This summer, win both. Create a Custom Index by July 15 for a chance to win $70,000 of TFSA contributions and an all-expenses-paid retreat to Nimmo Bay.</p>
+      <div class="contest__cta rv">
+        <a class="qbtn qbtn--green" href="#">Learn more</a>
+        <a class="qbtn qbtn--dark" href="#">Create an index to enter</a>
+      </div>
+    </div>
+    <div class="contest__images"><div class="contest__img rv"><img src="media/contest-1.jpg" alt="Old-growth forest at Nimmo Bay" loading="lazy"><span class="contest__shade"></span></div><div class="contest__img rv"><img src="media/contest-2.jpg" alt="Coastal beach at sunrise" loading="lazy"><span class="contest__shade"></span></div><div class="contest__img rv"><img src="media/contest-3.jpg" alt="Nimmo Bay wilderness lodge" loading="lazy"><span class="contest__shade"></span></div><div class="contest__img rv"><img src="media/contest-4.jpg" alt="Kayaking in the mist" loading="lazy"><span class="contest__shade"></span></div></div>
+  </section>
+
+  <!-- SUMMARY -->
+  <section data-ag class="summary">
+    <div class="summary__left">
+      <h2 class="summary__title rv-h">Remix the markets<br>for free</h2>
+      <a class="qbtn qbtn--white summary__cta rv" href="#">Get started</a>
+      <div class="summary__cards">
+        <div class="summary__row">
+          <div class="sumcard rv"><span class="sumcard__icon"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#151916" stroke-width="1.5" stroke-linejoin="round"><rect x="5.5" y="5.5" width="9" height="9" rx="2"/><path d="M11.3 5.5V4.3A2 2 0 0 0 9.3 2.3H4.3A2 2 0 0 0 2.3 4.3V9.3A2 2 0 0 0 4.3 11.3H5.5"/></svg></span><p class="sumcard__txt">Get started in minutes with a pre-made template</p></div>
+          <div class="sumcard rv"><span class="sumcard__icon">10K</span><p class="sumcard__txt">Access to over 10,000 securities</p></div>
+          <div class="sumcard rv"><span class="sumcard__icon">600</span><p class="sumcard__txt">Hold as many as 600 securities at once</p></div>
+        </div>
+        <div class="summary__row">
+          <div class="sumcard rv"><span class="sumcard__icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#151916" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10a7 7 0 0 1 11.5-5.3L17 7"/><path d="M17 3v4h-4"/><path d="M17 10a7 7 0 0 1-11.5 5.3L3 13"/><path d="M3 17v-4h4"/></svg></span><p class="sumcard__txt">Automate your dividend reinvesting</p></div>
+          <div class="sumcard rv"><span class="sumcard__icon"><svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#151916" stroke-width="1.7"><circle cx="13" cy="13" r="9"/><text x="13" y="17.5" text-anchor="middle" font-size="12" font-weight="700" fill="#151916" stroke="none" font-family="Funnel Sans,sans-serif">$</text><line x1="6.7" y1="19.3" x2="19.3" y2="6.7" stroke-linecap="round"/></svg></span><p class="sumcard__txt">No account fees or trading commissions</p></div>
+          <div class="sumcard rv"><span class="sumcard__icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#151916" stroke-width="1.6" stroke-linecap="round"><line x1="3" y1="6.5" x2="17" y2="6.5"/><circle cx="13" cy="6.5" r="2.4" fill="var(--green-bg)"/><line x1="3" y1="13.5" x2="17" y2="13.5"/><circle cx="7" cy="13.5" r="2.4" fill="var(--green-bg)"/></svg></span><p class="sumcard__txt">Rebalance or adjust your portfolio anytime in one click</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="summary__media rv"><img src="media/summary.jpg" alt="Custom indexing hi-fi"></div>
+  </section>
+
+  <!-- END CARD -->
+  <section data-ag class="endcard">
+    <!-- Replace the source below with your background video (mp4/webm). Falls back to a dark gradient until then. -->
+    <video class="endcard__bg is-active" data-ec="0" autoplay muted loop playsinline preload="auto"><source src="media/endcard-ride-the-chaos.mp4" type="video/mp4"></video>
+    <video class="endcard__bg" data-ec="1" autoplay muted loop playsinline preload="auto"><source src="media/endcard-main-character.mp4" type="video/mp4"></video>
+    <div class="endcard__content">
+      <div class="endcard__card">
+        <div class="endcard__arrows">
+          <button class="endcard__arrow prev is-disabled" aria-label="Previous"><span style="transform:rotate(180deg);display:flex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg></span></button>
+          <button class="endcard__arrow next" aria-label="Next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg></button>
+        </div>
+        <h3 class="endcard__title" id="ecTitle">Ride the Chaos</h3>
+        <p class="endcard__sub" id="ecSub">Embrace high volatility.</p>
+        <a class="qbtn qbtn--dark endcard__cta" href="#">Start with this index</a>
+      </div>
+      <div class="endcard__pills" id="ecPills">
+        <div class="endcard__pillrow"><span class="endcard__pill">Quantum Computing</span><span class="endcard__pill">Data Center Optics</span><span class="endcard__pill">Advanced Nuclear Energy</span></div>
+        <div class="endcard__pillrow"><span class="endcard__pill">Algorithmic Real Estate</span><span class="endcard__pill">Digital Asset Treasury</span><span class="endcard__pill">Autonomous Combat Systems</span></div>
+        <div class="endcard__pillrow"><span class="endcard__pill">Speculative Biotech</span><span class="endcard__pill">Critical Minerals</span><span class="endcard__pill">Power Semiconductor Materials</span></div>
+      </div>
+    </div>
+  </section>
+
+
+
+
+<script>
+(function(){
+  var section=document.getElementById('howto');
+  if(!section) return;
+  var steps=[].slice.call(section.querySelectorAll('.step'));
+  var N=steps.length, current=-1, autoScrolling=false;
+  function isDesk(){ return window.matchMedia('(min-width:861px)').matches; }
+  function setStep(i){
+    if(i===current) return; current=i;
+    for(var k=0;k<N;k++){ steps[k].classList.toggle('is-active', k===i); steps[k].classList.toggle('is-done', k<i); }
+  }
+  function absTop(){ return section.getBoundingClientRect().top + window.scrollY; }
+  function scrollToStep(k){
+    var s=section.offsetHeight-window.innerHeight;
+    autoScrolling=true;
+    window.scrollTo({ top: absTop() + (k+0.5)/N*s, behavior:'smooth' });
+    setTimeout(function(){ autoScrolling=false; }, 900);
+  }
+  function onScroll(){
+    if(!isDesk()){ section.classList.add('is-paused'); return; }
+    var r=section.getBoundingClientRect();
+    var s=section.offsetHeight-window.innerHeight;
+    var p=Math.min(Math.max(-r.top/s,0),1);
+    setStep(Math.min(N-1, Math.floor(p*N)));
+    var navH=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--nav-h'))||78; var pinned = r.top<=navH+1 && r.bottom>=window.innerHeight-1;
+    section.classList.toggle('is-paused', !pinned);
+  }
+  section.addEventListener('animationend', function(e){
+    if(e.animationName!=='howtofill' || !isDesk() || autoScrolling) return;
+    if(current < N-1){ scrollToStep(current+1); }
+    else { var nx=document.querySelector('.cmp'); if(nx){ autoScrolling=true; nx.scrollIntoView({behavior:'smooth', block:'start'}); setTimeout(function(){ autoScrolling=false; },900); } }
+  });
+  steps.forEach(function(s,idx){ s.addEventListener('click', function(){ if(isDesk()) scrollToStep(idx); }); });
+  setStep(0);
+  section.classList.add('is-paused');
+  window.addEventListener('scroll', onScroll, {passive:true});
+  window.addEventListener('resize', onScroll);
+  onScroll();
+})();
+</script>
+<script>
+(function(){
+  var section=document.querySelector('.sp');
+  var vp=document.getElementById('spVp'), track=document.getElementById('spTrack');
+  var prev=document.getElementById('spPrev'), next=document.getElementById('spNext');
+  if(!section||!vp||!track) return;
+  var cards=[].slice.call(track.querySelectorAll('.card'));
+  var index=0;
+  function isDesktop(){ return window.innerWidth>860; }
+  function step(){ var g=parseFloat(getComputedStyle(track).gap)||20; return cards[0].getBoundingClientRect().width+g; }
+  function maxScroll(){ return Math.max(0, track.scrollWidth - vp.clientWidth); }
+  function onScroll(){
+    if(!isDesktop()) return;
+    var ms=maxScroll(), dist=section.offsetHeight-window.innerHeight, r=section.getBoundingClientRect();
+    var pr = dist>0 ? Math.min(Math.max(-r.top/dist,0),1) : 0;
+    var hold=0.12, t = pr<hold?0:(pr>1-hold?1:(pr-hold)/(1-2*hold));
+    track.style.transform='translateX('+(-t*ms)+'px)';
+    if(prev) prev.disabled = pr<=0.002;
+    if(next) next.disabled = pr>=0.998;
+  }
+  function maxIndex(){ return cards.length-1; }
+  function applyMobile(){ var cw=cards[0].getBoundingClientRect().width; var pad=parseFloat(getComputedStyle(track).paddingLeft)||0; var x=(vp.clientWidth/2)-pad-index*step()-cw/2; track.style.transform='translateX('+x+'px)'; if(prev)prev.disabled=index<=0; if(next)next.disabled=index>=maxIndex(); }
+  function goMobile(d){ index=Math.max(0,Math.min(maxIndex(),index+d)); applyMobile(); }
+  function setTransition(){ track.style.transition = isDesktop() ? 'none' : 'transform .5s cubic-bezier(.22,.65,.2,1)'; }
+  function layout(){
+    setTransition();
+    if(isDesktop()){ section.style.height=(window.innerHeight+maxScroll()/0.76)+'px'; onScroll(); }
+    else { section.style.height=''; index=Math.min(index,maxIndex()); applyMobile(); }
+  }
+  prev.onclick=function(){ if(isDesktop()) window.scrollBy({top:-step(),behavior:'smooth'}); else goMobile(-1); };
+  next.onclick=function(){ if(isDesktop()) window.scrollBy({top:step(),behavior:'smooth'}); else goMobile(1); };
+  var sx=0,sy=0,drag=false,moved=false;
+  vp.addEventListener('pointerdown',function(e){ sx=e.clientX; sy=e.clientY; drag=true; moved=false; });
+  vp.addEventListener('pointermove',function(e){ if(drag&&(Math.abs(e.clientX-sx)>10||Math.abs(e.clientY-sy)>10)) moved=true; });
+  window.addEventListener('pointerup',function(e){ if(!drag)return; drag=false; if(isDesktop())return; var dx=e.clientX-sx; if(moved&&Math.abs(dx)>40&&Math.abs(dx)>Math.abs(e.clientY-sy)) goMobile(dx<0?1:-1); });
+  function flipScale(card){ card.style.setProperty('--tx','0deg'); card.style.setProperty('--ty','0deg'); card.style.setProperty('--s','0.92'); setTimeout(function(){ card.style.setProperty('--s','1'); },420); }
+  cards.forEach(function(card){
+    card.querySelectorAll('.light,.dark').forEach(function(b){ b.addEventListener('click',function(e){ e.stopPropagation(); }); });
+    card.addEventListener('click',function(){ if(moved)return; flipScale(card); card.classList.toggle('is-flipped'); });
+    card.addEventListener('pointermove',function(e){ if(e.pointerType==='touch')return; if(card.style.getPropertyValue('--s')==='0.92')return; var r=card.getBoundingClientRect(); var px=(e.clientX-r.left)/r.width-0.5, py=(e.clientY-r.top)/r.height-0.5; card.style.setProperty('--ty',(px*8).toFixed(2)+'deg'); card.style.setProperty('--tx',(-py*8).toFixed(2)+'deg'); });
+    card.addEventListener('pointerleave',function(){ card.style.setProperty('--tx','0deg'); card.style.setProperty('--ty','0deg'); });
+  });
+  window.addEventListener('scroll', onScroll, {passive:true});
+  window.addEventListener('resize', layout);
+  layout();
+})();
+</script>
+
+<script>
+(function(){
+  var ec=document.querySelector('.endcard'); if(!ec) return;
+  function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+  var states=[
+    {title:"Ride the Chaos", sub:"Embrace high volatility.", pills:[
+      ["Quantum Computing","Data Center Optics","Advanced Nuclear Energy"],
+      ["Algorithmic Real Estate","Digital Asset Treasury","Autonomous Combat Systems"],
+      ["Speculative Biotech","Critical Minerals","Power Semiconductor Materials"]]},
+    {title:"Main Character Energy", sub:"Own what's in your feed.", pills:[
+      ["Beauty & Skincare","Performance Footwear","Streetwear & Apparel"],
+      ["Social Media Platforms","Wellness","Luxury & Heritage Fashion"],
+      ["Casual Dining","Self-Care","Travel"]]}
+  ];
+  var idx=0;
+  var titleEl=ec.querySelector('#ecTitle'), subEl=ec.querySelector('#ecSub'), pillsEl=ec.querySelector('#ecPills');
+  var prev=ec.querySelector('.endcard__arrow.prev'), next=ec.querySelector('.endcard__arrow.next');
+  var bgs=ec.querySelectorAll('.endcard__bg');
+  function render(){
+    var s=states[idx];
+    titleEl.textContent=s.title; subEl.textContent=s.sub;
+    pillsEl.innerHTML=s.pills.map(function(row){
+      return '<div class="endcard__pillrow">'+row.map(function(p){ return '<span class="endcard__pill">'+esc(p)+'</span>'; }).join('')+'</div>';
+    }).join('');
+    for(var i=0;i<bgs.length;i++){ bgs[i].classList.toggle('is-active', i===idx); }
+    prev.classList.toggle('is-disabled', idx===0);
+    next.classList.toggle('is-disabled', idx===states.length-1);
+  }
+  prev.addEventListener('click', function(){ if(idx>0){ idx--; render(); } });
+  next.addEventListener('click', function(){ if(idx<states.length-1){ idx++; render(); } });
+  render();
+})();
+</script>
+
+<script>
+(function(){
+  var rdm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function splitLines(el){
+    var lines=[], cur=[];
+    [].slice.call(el.childNodes).forEach(function(node){
+      if(node.nodeType===1 && node.tagName==='BR'){ lines.push(cur); cur=[]; }
+      else { cur.push(node); }
+    });
+    lines.push(cur);
+    el.innerHTML='';
+    lines.forEach(function(group){
+      var span=document.createElement('span'); span.className='rv-line';
+      group.forEach(function(n){ span.appendChild(n); });
+      el.appendChild(span);
+    });
+    el.classList.add('rv-split');
+  }
+  document.querySelectorAll('.rv-h').forEach(splitLines);
+  if(!('IntersectionObserver' in window) || rdm){
+    document.querySelectorAll('.rv,.rv-line,.sp .card').forEach(function(el){ el.classList.add('rv-show'); });
+    return;
+  }
+  function show(n){ n.classList.add('rv-show'); }
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(!en.isIntersecting) return;
+      var sec=en.target;
+      var isHero = sec.classList.contains('hero');
+      var BASE = isHero ? 400 : 120;
+      var STEP = isHero ? 140 : 80;
+      var targets=sec.querySelectorAll('.rv, .rv-line'); // line spans -> content, in document order
+      requestAnimationFrame(function(){
+        for(var i=0;i<targets.length;i++){ (function(n,d){ setTimeout(function(){ show(n); }, d); })(targets[i], BASE + i*STEP); }
+        if(sec.classList.contains('sp')){
+          var cards=sec.querySelectorAll('.card');
+          for(var j=0;j<cards.length;j++){ (function(n,d){ setTimeout(function(){ show(n); }, d); })(cards[j], 820 + j*90); }
+        }
+      });
+      io.unobserve(sec);
+    });
+  }, { threshold:0.12, rootMargin:'0px 0px -8% 0px' });
+  document.querySelectorAll('[data-ag]').forEach(function(s){ io.observe(s); });
+})();
+</script>
+</body>
+</html>
